@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>รูปหน้า 5 ธาตุ</title>
+<meta name="description" content="จับรูปทรงใบหน้าด้วยกล้อง แล้วให้คะแนนธาตุทั้ง 5 ตามวิชาโหงวเฮ้ง — ภาพไม่ออกจากเครื่องของคุณ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+TC:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260925222259">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>五</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="seal">五行</span>
+    <div>
+      <h1>รูปหน้า 5 ธาตุ</h1>
+      <p class="sub">五行形相 · อ่านรูปทรงใบหน้าจากกล้อง</p>
+    </div>
+  </div>
+  <div class="top-right">
+    <p class="privacy" id="privacy">🔒 ภาพไม่ออกจากเครื่องนี้ — ส่งไปคำนวณแค่ตัวเลขจุดบนใบหน้า</p>
+    <button class="btn sm" id="btnSettings" aria-haspopup="dialog">⚙ ตั้งค่า</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="stage-col">
+    <div class="stage" id="stage">
+      <canvas id="view" aria-label="ภาพจากกล้องพร้อมเส้นวัดใบหน้า"></canvas>
+      <div class="stage-empty" id="stageEmpty">
+        <div class="empty-inner">
+          <div class="big-hanzi">相</div>
+          <p>กด <b>เปิดกล้อง</b> หรือ <b>เลือกรูป</b> เพื่อเริ่ม</p>
+          <ul class="tips">
+            <li>หันหน้าตรง ให้หน้าอยู่กลางวงกลม</li>
+            <li>ตั้งกล้องระดับสายตา แสงส่องหน้าสม่ำเสมอ</li>
+            <li><b>รวบผมขึ้นให้เห็นไรผม</b> — หน้าผากจะวัดได้ตรง</li>
+          </ul>
+        </div>
+      </div>
+      <div class="stage-msg" id="stageMsg" hidden></div>
+      <button class="fs-btn" id="btnFull" title="เต็มจอ (F) · กด Esc เพื่อออก" aria-label="เต็มจอ">⛶ <span>เต็มจอ</span></button>
+      <div class="fs-hint" id="fsHint">กด <kbd>Esc</kbd> หรือปุ่ม ✕ เพื่อออกจากเต็มจอ</div>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div id="loadingText">กำลังเตรียมระบบ…</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="row main-actions">
+        <button class="btn primary" id="btnCam">📷 เปิดกล้อง</button>
+        <label class="btn" id="btnPhotoLabel">🖼 เลือกรูป
+          <input type="file" id="filePhoto" accept="image/*" hidden>
+        </label>
+        <button class="btn gold" id="btnCapture" disabled>● จับภาพ / ดูผลเต็ม</button>
+      </div>
+
+      <details class="panel-box" id="ageOpts">
+        <summary>ปีจร 100 ปี · วันเกิด · โป๊ยหยี่</summary>
+        <div class="opts">
+          <label class="chk"><input type="checkbox" id="optAges"> แสดงตำแหน่งปีจรบนใบหน้า</label>
+          <div class="seg-row">
+            <span>เพศ</span>
+            <div class="seg" role="radiogroup">
+              <label class="pill"><input type="radio" name="sex" value="m" checked> ชาย <small>(นับซ้ายก่อน)</small></label>
+              <label class="pill"><input type="radio" name="sex" value="f"> หญิง <small>(สลับข้าง)</small></label>
+            </div>
+          </div>
+          <div class="seg-row">
+            <span>อายุที่เน้น</span>
+            <input type="range" id="ageRange" min="1" max="100" value="30">
+            <output id="ageVal">30</output>
+          </div>
+          <div class="seg-row">
+            <span>ป้ายกำกับ</span>
+            <select id="ageLabels">
+              <option value="0">เฉพาะอายุที่เน้น</option>
+              <option value="1" selected>ทุก 10 ปี</option>
+              <option value="2">ทุกจุด</option>
+            </select>
+          </div>
+          <hr>
+          <div class="seg-row wrap">
+            <span>วันเกิด</span>
+            <input type="date" id="birthDate">
+            <input type="time" id="birthTime" title="เวลาเกิด (ไม่ใส่ก็ได้)">
+            <button class="btn sm" id="btnBirth">คำนวณ</button>
+          </div>
+          <div class="birth-out" id="birthOut" hidden></div>
+        </div>
+      </details>
+      <details class="panel-box" id="viewOpts">
+        <summary>ตัวเลือกการแสดงผล</summary>
+        <div class="opts">
+          <label class="chk"><input type="checkbox" id="optLines" checked> เส้นวัด · ไรผม · สามตอน</label>
+          <label class="chk"><input type="checkbox" id="optMask" checked> เส้นรอบใบหน้า (สีตามธาตุหลัก)</label>
+          <label class="chk"><input type="checkbox" id="optTarget" checked> วงเล็งกลางภาพ</label>
+          <label class="chk"><input type="checkbox" id="optMirror" checked> กล้องแบบกระจก</label>
+          <div class="nudge">
+            <span>ขยับไรผมเอง <small>(ผมหน้าม้าบัง / หัวล้าน)</small></span>
+            <div class="seg">
+              <button class="btn sm" id="hairUp" title="ไรผมขึ้น">▲</button>
+              <output id="hairVal">0</output>
+              <button class="btn sm" id="hairDown" title="ไรผมลง">▼</button>
+              <button class="btn sm ghost" id="hairReset">รีเซ็ต</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <aside class="result-col" id="result">
+    <div class="card hero" id="heroCard">
+      <div class="hero-empty" id="heroEmpty">ผลจะแสดงที่นี่เมื่อเจอใบหน้า</div>
+      <div class="hero-body" id="heroBody" hidden>
+        <div class="hero-main">
+          <div class="hero-hanzi" id="heroHanzi">木</div>
+          <div>
+            <div class="hero-label">ธาตุหลัก</div>
+            <div class="hero-name"><span id="heroName">ไม้</span> <span class="hero-pct" id="heroPct">0%</span></div>
+            <div class="hero-shape" id="heroShape"></div>
+          </div>
+        </div>
+        <div class="bars" id="bars"></div>
+        <div class="relation" id="relation"></div>
+        <div class="organs" id="organs"></div>
+        <div class="warn" id="warn" hidden></div>
+        <div class="frames" id="frames"></div>
+      </div>
+    </div>
+
+    <div class="card" id="ageCard" hidden>
+      <h3>ปีจรที่เน้น</h3>
+      <div id="ageHit"></div>
+    </div>
+
+    <details class="card" id="metricsCard">
+      <summary><h3>ตัวเลขที่วัดได้</h3></summary>
+      <table class="metrics" id="metrics"></table>
+    </details>
+
+    <details class="card" id="fhCard">
+      <summary><h3>หน้าผาก (วัดจากขอบผม)</h3></summary>
+      <ul class="fh" id="fhList"><li>ยังไม่มีข้อมูล</li></ul>
+    </details>
+
+    <p class="note">โปรแกรมอ่านได้แค่ <b>รูปทรง</b> — สีผิว ราศี ประกาย เนื้อหนัง ยังต้องดูด้วยตา
+      และ “ในโลกนี้หน้าเดียวไม่มี เป็นหน้าผสมทั้งนั้น” ผลจึงออกเป็น % ทั้ง 5 ธาตุเสมอ</p>
+  </aside>
+</main>
+
+<dialog id="reportDlg">
+  <form method="dialog" class="dlg-head">
+    <h2>ผลวัดรูปหน้า 5 ธาตุ</h2>
+    <button class="btn sm ghost" value="close" aria-label="ปิด">✕</button>
+  </form>
+  <div class="dlg-body">
+    <img id="shotImg" alt="ภาพที่จับไว้พร้อมเส้นวัด">
+    <div id="reportHtml"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" id="dlPng">⬇ บันทึกรูป (.png)</button>
+    <button class="btn" id="dlMd">⬇ บันทึกรายงาน (.md)</button>
+    <button class="btn primary" id="btnResume">กลับไปที่กล้อง</button>
+  </div>
+</dialog>
+
+<dialog id="settingsDlg">
+  <form method="dialog" class="dlg-head">
+    <h2>⚙ ตั้งค่าการแสดงผล</h2>
+    <button class="btn sm ghost" value="close" aria-label="ปิด">✕</button>
+  </form>
+  <div class="settings" id="settingsBody"></div>
+  <div class="dlg-foot">
+    <button class="btn" id="setAllOn">แสดงทั้งหมด</button>
+    <button class="btn" id="setReset">ค่าเริ่มต้น</button>
+    <button class="btn primary" id="setDone">เสร็จ</button>
+  </div>
+</dialog>
+
+<footer class="foot" id="foot">พัฒนาโดย ☉เอกโหรา♃</footer>
+
+<script type="module" src="app.js?v=20260925222259"></script>
+</body>
+</html>
